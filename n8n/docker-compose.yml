@@ -1,0 +1,27 @@
+services:
+  n8n:
+    image: n8nio/n8n:1.91.3
+    container_name: speedsters-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    env_file:
+      - .env
+    environment:
+      # Local n8n listens over HTTP behind the public HTTPS reverse proxy.
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_SECURE_COOKIE=false
+      - N8N_RUNNERS_ENABLED=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=true
+      - GENERIC_TIMEZONE=Etc/UTC
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:5678/healthz', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./neuroreview.workflow.json:/workflows/neuroreview.workflow.json:ro
